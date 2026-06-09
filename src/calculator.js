@@ -7,6 +7,9 @@
 // - subtraction
 // - multiplication
 // - division
+// - modulo
+// - power (exponentiation)
+// - square root
 
 // Exported functions for programmatic use
 function add(a, b) {
@@ -28,26 +31,71 @@ function divide(a, b) {
   return a / b;
 }
 
-module.exports = { add, subtract, multiply, divide };
+function modulo(a, b) {
+  if (b === 0) {
+    throw new Error("Modulo by zero");
+  }
+  return a % b;
+}
 
-// CLI entrypoint: node src/calculator.js <operation> <a> <b>
+function power(base, exponent) {
+  return Math.pow(base, exponent);
+}
+
+function squareRoot(n) {
+  if (n < 0) {
+    throw new Error("Square root of negative number");
+  }
+  return Math.sqrt(n);
+}
+
+module.exports = { add, subtract, multiply, divide, modulo, power, squareRoot };
+
+// CLI entrypoint:
+// Usage:
+//  node src/calculator.js <operation> <a> <b>
+//  node src/calculator.js sqrt <n>    (unary)
+// Supported operation names: add, subtract, multiply, divide, modulo, power, sqrt
 if (require.main === module) {
-  const [, , op, aRaw, bRaw] = process.argv;
+  const argv = process.argv.slice(2);
+  const op = argv[0];
 
   function usage() {
     console.error("Usage: node src/calculator.js <operation> <a> <b>");
-    console.error("Operations: add, subtract, multiply, divide (or +, -, *, /)");
+    console.error("Unary: node src/calculator.js sqrt <n>");
+    console.error("Operations: add(+), subtract(-), multiply(*), divide(/), modulo(%), power(pow,^), sqrt");
     process.exit(2);
   }
 
-  if (!op || aRaw === undefined || bRaw === undefined) {
-    usage();
+  if (!op) usage();
+
+  // unary sqrt
+  if (op === 'sqrt' || op === 'squareRoot' || op === '√') {
+    const aRaw = argv[1];
+    if (aRaw === undefined) usage();
+    const a = Number(aRaw);
+    if (!Number.isFinite(a)) {
+      console.error('Operand must be a valid number.');
+      process.exit(2);
+    }
+    try {
+      const res = squareRoot(a);
+      console.log(res);
+      process.exit(0);
+    } catch (err) {
+      console.error('Error:', err.message);
+      process.exit(3);
+    }
   }
+
+  const aRaw = argv[1];
+  const bRaw = argv[2];
+  if (aRaw === undefined || bRaw === undefined) usage();
 
   const a = Number(aRaw);
   const b = Number(bRaw);
   if (!Number.isFinite(a) || !Number.isFinite(b)) {
-    console.error("Both operands must be valid numbers.");
+    console.error('Both operands must be valid numbers.');
     process.exit(2);
   }
 
@@ -73,6 +121,15 @@ if (require.main === module) {
       case "÷":
         result = divide(a, b);
         break;
+      case "modulo":
+      case "%":
+        result = modulo(a, b);
+        break;
+      case "power":
+      case "pow":
+      case "^":
+        result = power(a, b);
+        break;
       default:
         console.error(`Unknown operation: ${op}`);
         usage();
@@ -82,7 +139,6 @@ if (require.main === module) {
     process.exit(3);
   }
 
-  // Print result to stdout
   if (Number.isFinite(result)) {
     console.log(result);
     process.exit(0);
